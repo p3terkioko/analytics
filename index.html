@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Insights Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0f0a;
+            color: #ffffff;
+            overflow-x: auto;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 250px 1fr 300px;
+            min-height: 100vh;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: #1a2520;
+            border-radius: 12px;
+            padding: 20px;
+            height: fit-content;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .logo::before {
+            content: '🎵';
+            font-size: 20px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            color: #8a9a8a;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            color: #4ade80;
+        }
+
+        .nav-item::before {
+            width: 16px;
+            height: 16px;
+            content: '○';
+            font-size: 12px;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header-section {
+            background: linear-gradient(135deg, #2a4a3a, #1a3a2a);
+            border-radius: 16px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-section::after {
+            content: '';
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            width: 100px;
+            height: 100px;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 10 L30 90 L70 90 Z" fill="%23ffffff20"/></svg>');
+            opacity: 0.3;
+        }
+
+        .overview-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 30px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .stat-card {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #4ade80;
+        }
+
+        .stat-label {
+            color: #8a9a8a;
+            margin-top: 5px;
+        }
+
+        /* Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .chart-container {
+            background: #1a2520;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #8a9a8a;
+        }
+
+        .bar-chart {
+            display: flex;
+            align-items: end;
+            gap: 8px;
+            height: 150px;
+            margin-bottom: 10px;
+        }
+
+        .bar {
+            flex: 1;
+            background: #4ade80;
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .bar:hover {
+            background: #22c55e;
+            transform: scaleY(1.1);
+        }
+
+        .chart-labels {
+            display: flex;
+            gap: 8px;
+            font-size: 12px;
+            color: #6a7a6a;
+        }
+
+        .chart-labels span {
+            flex: 1;
+            text-align: center;
+        }
+
+        /* API Explorer */
+        .api-section {
+            background: #1a2520;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .api-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .api-endpoint {
+            background: #0f1a0f;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #2a3a2a;
+        }
+
+        .endpoint-method {
+            color: #4ade80;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .endpoint-path {
+            color: #ffffff;
+            margin: 5px 0;
+            font-family: monospace;
+        }
+
+        .endpoint-desc {
+            color: #8a9a8a;
+            font-size: 14px;
+        }
+
+        .code-block {
+            background: #0a1a0a;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            color: #4ade80;
+            border: 1px solid #2a3a2a;
+        }
+
+        .btn {
+            background: #4ade80;
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-right: 10px;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #22c55e;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #8a9a8a;
+            border: 1px solid #2a3a2a;
+        }
+
+        /* Right Sidebar */
+        .right-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .playlist-section, .contributors-section, .tracks-section {
+            background: #1a2520;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .track-item, .contributor-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #2a3a2a;
+        }
+
+        .track-item:last-child, .contributor-item:last-child {
+            border-bottom: none;
+        }
+
+        .track-avatar, .contributor-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #4ade80, #22c55e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #000;
+        }
+
+        .track-info, .contributor-info {
+            flex: 1;
+        }
+
+        .track-name, .contributor-name {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .track-artist, .contributor-role {
+            color: #8a9a8a;
+            font-size: 14px;
+        }
+
+        .track-time {
+            color: #6a7a6a;
+            font-size: 12px;
+        }
+
+        .search-box {
+            background: #0f1a0f;
+            border: 1px solid #2a3a2a;
+            border-radius: 8px;
+            padding: 10px 15px;
+            color: #ffffff;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .search-box::placeholder {
+            color: #6a7a6a;
+        }
+
+        .top-contributors {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .top-contributor {
+            text-align: center;
+            flex: 1;
+        }
+
+        .top-contributor-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #4ade80, #22c55e);
+            margin: 0 auto 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #000;
+        }
+
+        .top-contributor-name {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .top-contributor-tracks {
+            font-size: 10px;
+            color: #8a9a8a;
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: 200px 1fr 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                padding: 15px;
+            }
+            
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Left Sidebar -->
+        <div class="sidebar">
+            <div class="logo">Music Insights</div>
+            <nav>
+                <div class="nav-item active">Home</div>
+                <div class="nav-item">Tracks</div>
+                <div class="nav-item">Contributors</div>
+                <div class="nav-item">API Explorer</div>
+                <div class="nav-item">Settings</div>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header Section -->
+            <div class="header-section">
+                <h1 class="overview-title">Overview</h1>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Top Artists</div>
+                        <div class="stat-number">5</div>
+                        <div class="stat-label">artists</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Top Genres</div>
+                        <div class="stat-number">3</div>
+                        <div class="stat-label">genres</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Top Contributors</div>
+                        <div class="stat-number">3</div>
+                        <div class="stat-label">contributors</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-section">
+                <div class="chart-container">
+                    <div class="chart-title">Top 10 Artists</div>
+                    <div class="bar-chart" id="artistChart">
+                        <div class="bar" style="height: 80%;"></div>
+                        <div class="bar" style="height: 65%;"></div>
+                        <div class="bar" style="height: 90%;"></div>
+                        <div class="bar" style="height: 45%;"></div>
+                        <div class="bar" style="height: 70%;"></div>
+                        <div class="bar" style="height: 55%;"></div>
+                        <div class="bar" style="height: 40%;"></div>
+                        <div class="bar" style="height: 35%;"></div>
+                        <div class="bar" style="height: 30%;"></div>
+                        <div class="bar" style="height: 25%;"></div>
+                    </div>
+                    <div class="chart-labels">
+                        <span>Artist1</span>
+                        <span>Artist2</span>
+                        <span>Artist3</span>
+                        <span>Artist4</span>
+                        <span>Artist5</span>
+                        <span>Artist6</span>
+                        <span>Artist7</span>
+                        <span>Artist8</span>
+                        <span>Artist9</span>
+                        <span>Artist10</span>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">Genre Distribution</div>
+                    <div class="bar-chart" id="genreChart">
+                        <div class="bar" style="height: 85%;"></div>
+                        <div class="bar" style="height: 60%;"></div>
+                        <div class="bar" style="height: 40%;"></div>
+                    </div>
+                    <div class="chart-labels">
+                        <span>Genre 1</span>
+                        <span>Genre 2</span>
+                        <span>Genre 3</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Explorer -->
+            <div class="api-section">
+                <div class="api-title">API Explorer</div>
+                
+                <div class="api-endpoint">
+                    <div class="endpoint-method">GET</div>
+                    <div class="endpoint-path">/playlists/analyze</div>
+                    <div class="endpoint-desc">Analyzes the playlist to identify top artists, genres, and contributors.</div>
+                    <div class="code-block">
+{
+  "top_artists": ["Artist1", "Artist2", "Artist3"],
+  "top_genres": ["Pop", "Rock", "Electronic"],
+  "contributors": ["User1", "User2", "User3"]
+}
+                    </div>
+                    <button class="btn">Copy JSON</button>
+                    <button class="btn btn-secondary">Download</button>
+                </div>
+
+                <div class="api-endpoint">
+                    <div class="endpoint-method">GET</div>
+                    <div class="endpoint-path">/playlists/tracks</div>
+                    <div class="endpoint-desc">Retrieve the listing of tracks in the playlist.</div>
+                    <div class="code-block">
+{
+  "tracks": [
+    {"title": "Track 1", "artist": "Artist Name", "album": "Album Name"},
+    {"title": "Track 2", "artist": "Artist Name", "album": "Album Name"}
+  ]
+}
+                    </div>
+                    <button class="btn">Copy JSON</button>
+                    <button class="btn btn-secondary">Download</button>
+                </div>
+
+                <div class="api-endpoint">
+                    <div class="endpoint-method">GET</div>
+                    <div class="endpoint-path">/playlists/contributors</div>
+                    <div class="endpoint-desc">Lists all contributors to the playlist.</div>
+                    <button class="btn">Try</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="right-sidebar">
+            <!-- Playlist Tracks -->
+            <div class="playlist-section">
+                <div class="section-title">Playlist Tracks</div>
+                <input type="text" class="search-box" placeholder="Search">
+                
+                <div class="track-item">
+                    <div class="track-avatar">MC</div>
+                    <div class="track-info">
+                        <div class="track-name">Midnight Cinema</div>
+                        <div class="track-artist">Dark Hearts</div>
+                    </div>
+                    <div class="track-time">Electronic</div>
+                </div>
+
+                <div class="track-item">
+                    <div class="track-avatar">CL</div>
+                    <div class="track-info">
+                        <div class="track-name">City Lights</div>
+                        <div class="track-artist">Urban Beats</div>
+                    </div>
+                    <div class="track-time">Pop</div>
+                </div>
+
+                <div class="track-item">
+                    <div class="track-avatar">OR</div>
+                    <div class="track-info">
+                        <div class="track-name">Ocean Breeze</div>
+                        <div class="track-artist">Sea Harmony</div>
+                    </div>
+                    <div class="track-time">Indie Folk</div>
+                </div>
+
+                <div class="track-item">
+                    <div class="track-avatar">DS</div>
+                    <div class="track-info">
+                        <div class="track-name">Desert Sunrise</div>
+                        <div class="track-artist">Desert Dream</div>
+                    </div>
+                    <div class="track-time">Rock</div>
+                </div>
+
+                <div class="track-item">
+                    <div class="track-avatar">MN</div>
+                    <div class="track-info">
+                        <div class="track-name">Mountain high</div>
+                        <div class="track-artist">Nature Bright</div>
+                    </div>
+                    <div class="track-time">Folk</div>
+                </div>
+            </div>
+
+            <!-- Contributors -->
+            <div class="contributors-section">
+                <div class="section-title">Who Added What</div>
+                
+                <div class="top-contributors">
+                    <div class="top-contributor">
+                        <div class="top-contributor-avatar">EC</div>
+                        <div class="top-contributor-name">Ethan Carter</div>
+                        <div class="top-contributor-tracks">15 tracks</div>
+                    </div>
+                    <div class="top-contributor">
+                        <div class="top-contributor-avatar">SC</div>
+                        <div class="top-contributor-name">Sophie Clark</div>
+                        <div class="top-contributor-tracks">12 tracks</div>
+                    </div>
+                    <div class="top-contributor">
+                        <div class="top-contributor-avatar">LB</div>
+                        <div class="top-contributor-name">Liam Bennett</div>
+                        <div class="top-contributor-tracks">8 tracks</div>
+                    </div>
+                </div>
+
+                <div class="contributor-item">
+                    <div class="contributor-avatar">AM</div>
+                    <div class="contributor-info">
+                        <div class="contributor-name">Ava Harper</div>
+                        <div class="contributor-role">7 tracks added</div>
+                    </div>
+                </div>
+
+                <div class="contributor-item">
+                    <div class="contributor-avatar">NF</div>
+                    <div class="contributor-info">
+                        <div class="contributor-name">Noah Foster</div>
+                        <div class="contributor-role">5 tracks added</div>
+                    </div>
+                </div>
+
+                <div class="contributor-item">
+                    <div class="contributor-avatar">OR</div>
+                    <div class="contributor-info">
+                        <div class="contributor-name">Olivia Reed</div>
+                        <div class="contributor-role">4 tracks added</div>
+                    </div>
+                </div>
+
+                <div class="contributor-item">
+                    <div class="contributor-avatar">JH</div>
+                    <div class="contributor-info">
+                        <div class="contributor-name">Jackson Hayes</div>
+                        <div class="contributor-role">3 tracks added</div>
+                    </div>
+                </div>
+
+                <div class="contributor-item">
+                    <div class="contributor-avatar">IM</div>
+                    <div class="contributor-info">
+                        <div class="contributor-name">Isabella Morgan</div>
+                        <div class="contributor-role">2 tracks added</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tracks Section -->
+            <div class="tracks-section">
+                <div class="section-title">Tracks</div>
+                <input type="text" class="search-box" placeholder="Find">
+                
+                <div class="track-item">
+                    <div class="track-avatar">MC</div>
+                    <div class="track-info">
+                        <div class="track-name">Midnight Cinema</div>
+                        <div class="track-artist">Armin Dreamer</div>
+                    </div>
+                    <div class="track-time">3:45</div>
+                </div>
+
+                <div class="track-item">
+                    <div class="track-avatar">NR</div>
+                    <div class="track-info">
+                        <div class="track-name">Neon Nights</div>
+                        <div class="track-artist">Digital Noir</div>
+                    </div>
+                    <div class="track-time">4:12</div>
+                </div>
+
+                <div class="track-item">
+                    <div class="track-avatar">GE</def>
+                    <div class="track-info">
+                        <div class="track-name">Golden Echoes</div>
+                        <div class="track-artist">Space Cadet</div>
+                    </div>
+                    <div class="track-time">3:58</div>
+                </div>
+
+                <div class="track-item">
+                    <div class="track-avatar">CR</div>
+                    <div class="track-info">
+                        <div class="track-name">Cosmic Rhythm</div>
+                        <div class="track-artist">Comet Beat</div>
+                    </div>
+                    <div class="track-time">4:23</div>
+                </div>
+
+                <div class="track-item">
+                    <div class="track-avatar">VM</div>
+                    <div class="track-info">
+                        <div class="track-name">Velvet Mirage</div>
+                        <div class="track-artist">Red Garden</div>
+                    </div>
+                    <div class="track-time">3:30</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize dashboard functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Navigation functionality
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+
+            // Search functionality
+            const searchBoxes = document.querySelectorAll('.search-box');
+            searchBoxes.forEach(box => {
+                box.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase();
+                    const container = this.closest('.playlist-section, .tracks-section');
+                    const items = container.querySelectorAll('.track-item');
+                    
+                    items.forEach(item => {
+                        const trackName = item.querySelector('.track-name').textContent.toLowerCase();
+                        const artistName = item.querySelector('.track-artist').textContent.toLowerCase();
+                        
+                        if (trackName.includes(searchTerm) || artistName.includes(searchTerm)) {
+                            item.style.display = 'flex';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                });
+            });
+
+            // Bar chart hover effects
+            const bars = document.querySelectorAll('.bar');
+            bars.forEach(bar => {
+                bar.addEventListener('mouseenter', function() {
+                    this.style.transform = 'scaleY(1.1)';
+                    this.style.background = '#22c55e';
+                });
+                
+                bar.addEventListener('mouseleave', function() {
+                    this.style.transform = 'scaleY(1)';
+                    this.style.background = '#4ade80';
+                });
+            });
+
+            // Copy JSON functionality
+            const copyButtons = document.querySelectorAll('.btn:not(.btn-secondary)');
+            copyButtons.forEach(button => {
+                if (button.textContent.includes('Copy')) {
+                    button.addEventListener('click', function() {
+                        const codeBlock = this.parentElement.querySelector('.code-block');
+                        if (codeBlock) {
+                            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                                const originalText = this.textContent;
+                                this.textContent = 'Copied!';
+                                setTimeout(() => {
+                                    this.textContent = originalText;
+                                }, 2000);
+                            });
+                        }
+                    });
+                }
+            });
+
+            // Animate bars on load
+            setTimeout(() => {
+                bars.forEach((bar, index) => {
+                    bar.style.transform = 'scaleY(0)';
+                    setTimeout(() => {
+                        bar.style.transition = 'transform 0.6s ease';
+                        bar.style.transform = 'scaleY(1)';
+                    }, index * 100);
+                });
+            }, 500);
+
+            // Track item interactions
+            const trackItems = document.querySelectorAll('.track-item');
+            trackItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // Remove active class from all items
+                    trackItems.forEach(track => track.classList.remove('active'));
+                    // Add active class to clicked item
+                    this.classList.add('active');
+                });
+            });
+
+            // Simulate real-time data updates
+            setInterval(() => {
+                const statNumbers = document.querySelectorAll('.stat-number');
+                statNumbers.forEach(stat => {
+                    const currentValue = parseInt(stat.textContent);
+                    // Randomly increase or decrease by 1
+                    const change = Math.random() > 0.5 ? 1 : -1;
+                    const newValue = Math.max(0, currentValue + change);
+                    stat.textContent = newValue;
+                });
+            }, 10000); // Update every 10 seconds
+        });
+    </script>
+</body>
+</html>
