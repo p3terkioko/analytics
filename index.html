@@ -678,6 +678,442 @@
     <script>
         // Initialize dashboard functionality
         document.addEventListener('DOMContentLoaded', function() {
+            function getInitials(name) {
+                if (!name || typeof name !== 'string') {
+                    return '';
+                }
+                const words = name.trim().split(/\s+/);
+                if (words.length > 1) {
+                    return (words[0][0] + words[1][0]).toUpperCase();
+                } else if (name.length >= 2) {
+                    return name.substring(0, 2).toUpperCase();
+                } else {
+                    return name.toUpperCase();
+                }
+            }
+
+            const backendData = {
+              "topArtists": [
+                { "name": "Brendan Ross", "count": 8 },
+                { "name": "Eminem", "count": 8 },
+                { "name": "Mutoriah", "count": 5 },
+                { "name": "Bien", "count": 4 },
+                { "name": "Nyashinski", "count": 4 },
+                { "name": "J. Cole", "count": 4 },
+                { "name": "Coldplay", "count": 3 },
+                { "name": "Watendawili", "count": 3 },
+                { "name": "Hozier", "count": 3 },
+                { "name": "Kanye West", "count": 3 }
+              ],
+              "topGenres": [
+                { "name": "afro soul", "count": 51 },
+                { "name": "amapiano", "count": 46 },
+                { "name": "gqom", "count": 42 },
+                { "name": "afropop", "count": 41 },
+                { "name": "afropiano", "count": 40 },
+                { "name": "afro r&b", "count": 37 },
+                { "name": "afrobeats", "count": 31 },
+                { "name": "gengetone", "count": 30 },
+                { "name": "private school piano", "count": 29 },
+                { "name": "rumba congolaise", "count": 27 }
+              ],
+              "topUsers": [
+                { "id": "xua99owgtnso375kz2zz41rtf", "displayName": "Dr. C", "count": 70 },
+                { "id": "31gqlwjf2ejtzfcv7yhjgpebhuxa", "displayName": "Pepp🍂", "count": 24 },
+                { "id": "31t76imks5ojgagmhuclld6bvbuq", "displayName": "0xFidel", "count": 21 },
+                { "id": "a3a3hg4jr1ezhnww7u2pck6vi", "displayName": "tanuiii", "count": 12 },
+                { "id": "31h7e6lwcumgv67635rand65lj6e", "displayName": "Ryan", "count": 11 },
+                { "id": "cl4u400dvbwcmn6vkind9twor", "displayName": "Kush", "count": 10 },
+                { "id": "xpe4w9i4tfeufakd7jfu1js6n", "displayName": "Sidoniasimanto", "count": 7 },
+                { "id": "312r66ff2zkgga3jxwcf7oeofbaq", "displayName": "Maddy", "count": 6 },
+                { "id": "nj6cjteprs0j0xs81x9ac7zek", "displayName": "Peterwambua", "count": 6 },
+                { "id": "31lshdib3ipz2tbwbloklk5j4pn4", "displayName": "Kristian", "count": 6 }
+              ]
+            };
+
+            function renderOverviewStats() {
+                const statCards = document.querySelectorAll('.stats-grid .stat-card');
+                statCards.forEach(card => {
+                    const labels = card.querySelectorAll('.stat-label');
+                    const numberEl = card.querySelector('.stat-number');
+                    if (!labels.length || !numberEl) return;
+
+                    const mainLabelText = labels[0].textContent.trim();
+                    let count = 0;
+                    let unitLabel = '';
+
+                    if (mainLabelText === 'Top Artists') {
+                        count = backendData.topArtists.length;
+                        unitLabel = 'artists';
+                    } else if (mainLabelText === 'Top Genres') {
+                        count = backendData.topGenres.length;
+                        unitLabel = 'genres';
+                    } else if (mainLabelText === 'Top Contributors') {
+                        count = backendData.topUsers.length;
+                        unitLabel = 'contributors';
+                    }
+
+                    numberEl.textContent = count;
+                    if (labels.length > 1) {
+                        labels[1].textContent = unitLabel;
+                    }
+                });
+            }
+            renderOverviewStats();
+
+            function renderArtistChart() {
+                const artistChartDiv = document.getElementById('artistChart');
+                const artistLabelsDiv = artistChartDiv.nextElementSibling; // Assumes .chart-labels is the immediate next sibling
+
+                // Clear existing content
+                artistChartDiv.innerHTML = '';
+                if (artistLabelsDiv) {
+                    artistLabelsDiv.innerHTML = '';
+                }
+
+                if (!backendData.topArtists || backendData.topArtists.length === 0) {
+                    artistChartDiv.textContent = 'No artist data available';
+                    return;
+                }
+
+                const topArtistsData = backendData.topArtists;
+                let maxCount = 0;
+                topArtistsData.forEach(artist => {
+                    if (artist.count > maxCount) {
+                        maxCount = artist.count;
+                    }
+                });
+
+                topArtistsData.forEach(artist => {
+                    // Create bar
+                    const bar = document.createElement('div');
+                    bar.className = 'bar';
+                    const barHeightPercentage = maxCount > 0 ? (artist.count / maxCount) * 100 : 0;
+                    bar.style.height = barHeightPercentage + '%';
+                    artistChartDiv.appendChild(bar);
+
+                    // Create label
+                    if (artistLabelsDiv) {
+                        const label = document.createElement('span');
+                        label.textContent = artist.name;
+                        artistLabelsDiv.appendChild(label);
+                    }
+                });
+
+                // Re-apply hover effects for dynamically added bars if necessary
+                // This might be needed if the original hover effect setup doesn't cover dynamic elements.
+                // However, the current CSS hover effect should work for new .bar elements.
+                // Add bar animation like in the original static version
+                const bars = artistChartDiv.querySelectorAll('.bar');
+                 setTimeout(() => {
+                    bars.forEach((bar, index) => {
+                        bar.style.transform = 'scaleY(0)'; // Initial state for animation
+                        setTimeout(() => {
+                            bar.style.transition = 'transform 0.6s ease';
+                            bar.style.transform = 'scaleY(1)';
+                        }, index * 100); // Stagger animation
+                    });
+                }, 100); // Small delay to ensure elements are rendered
+            }
+            renderArtistChart();
+
+            function renderGenreChart() {
+                const genreChartDiv = document.getElementById('genreChart');
+                const genreLabelsDiv = genreChartDiv.nextElementSibling; // Assumes .chart-labels is the immediate next sibling
+
+                // Clear existing content
+                genreChartDiv.innerHTML = '';
+                if (genreLabelsDiv) {
+                    genreLabelsDiv.innerHTML = '';
+                }
+
+                if (!backendData.topGenres || backendData.topGenres.length === 0) {
+                    genreChartDiv.textContent = 'No genre data available';
+                    return;
+                }
+
+                const topGenresData = backendData.topGenres;
+                let maxCount = 0;
+                topGenresData.forEach(genre => {
+                    if (genre.count > maxCount) {
+                        maxCount = genre.count;
+                    }
+                });
+
+                topGenresData.forEach(genre => {
+                    // Create bar
+                    const bar = document.createElement('div');
+                    bar.className = 'bar';
+                    const barHeightPercentage = maxCount > 0 ? (genre.count / maxCount) * 100 : 0;
+                    bar.style.height = barHeightPercentage + '%';
+                    genreChartDiv.appendChild(bar);
+
+                    // Create label
+                    if (genreLabelsDiv) {
+                        const label = document.createElement('span');
+                        label.textContent = genre.name;
+                        genreLabelsDiv.appendChild(label);
+                    }
+                });
+
+                // Add bar animation
+                const bars = genreChartDiv.querySelectorAll('.bar');
+                setTimeout(() => {
+                    bars.forEach((bar, index) => {
+                        bar.style.transform = 'scaleY(0)'; // Initial state for animation
+                        setTimeout(() => {
+                            bar.style.transition = 'transform 0.6s ease';
+                            bar.style.transform = 'scaleY(1)';
+                        }, index * 100); // Stagger animation
+                    });
+                }, 100); // Small delay
+            }
+            renderGenreChart();
+
+            function renderApiExplorer() {
+                const apiEndpoints = document.querySelectorAll('.api-section .api-endpoint');
+
+                apiEndpoints.forEach(endpoint => {
+                    const pathElement = endpoint.querySelector('.endpoint-path');
+                    const codeBlockElement = endpoint.querySelector('.code-block');
+
+                    if (pathElement && codeBlockElement) {
+                        const pathText = pathElement.textContent.trim();
+
+                        if (pathText === '/playlists/analyze') {
+                            const simplifiedData = {
+                                topArtists: backendData.topArtists.slice(0, 3).map(artist => artist.name),
+                                topGenres: backendData.topGenres.slice(0, 3).map(genre => genre.name),
+                                topUsers: backendData.topUsers.slice(0, 3).map(user => user.displayName)
+                            };
+                            codeBlockElement.textContent = JSON.stringify(simplifiedData, null, 2);
+                        } else if (pathText === '/playlists/tracks') {
+                            const sampleTracks = {
+                                "tracks": [
+                                    { "title": "Sample Track 1", "artist": "Sample Artist", "album": "Sample Album" },
+                                    { "title": "Sample Track 2", "artist": "Another Artist", "album": "Another Album" }
+                                ]
+                            };
+                            codeBlockElement.textContent = JSON.stringify(sampleTracks, null, 2);
+                        }
+                    }
+                });
+            }
+            renderApiExplorer();
+
+            function renderPlaylistTracks() {
+                const playlistSection = document.querySelector('.playlist-section');
+                if (!playlistSection) return;
+
+                // Remove existing track items
+                const existingTrackItems = playlistSection.querySelectorAll('.track-item');
+                existingTrackItems.forEach(item => item.remove());
+
+                if (!backendData.topArtists || backendData.topArtists.length === 0) {
+                    const message = document.createElement('p');
+                    message.textContent = 'No tracks to display (using top artists as sample data).';
+                    message.style.textAlign = 'center';
+                    message.style.padding = '20px';
+                    // Make sure not to append if a search box or title is the only thing left
+                    const sectionTitle = playlistSection.querySelector('.section-title');
+                    const searchBox = playlistSection.querySelector('.search-box');
+                    let lastElement = playlistSection.lastElementChild;
+                    if (lastElement === searchBox || lastElement === sectionTitle) {
+                        playlistSection.appendChild(message);
+                    } else if (searchBox && searchBox.nextSibling) {
+                         searchBox.parentNode.insertBefore(message, searchBox.nextSibling);
+                    } else {
+                         playlistSection.appendChild(message);
+                    }
+                    return;
+                }
+
+                const artistsToDisplay = backendData.topArtists.slice(0, 5);
+
+                artistsToDisplay.forEach(artist => {
+                    const trackItem = document.createElement('div');
+                    trackItem.className = 'track-item';
+
+                    const avatarDiv = document.createElement('div');
+                    avatarDiv.className = 'track-avatar';
+                    avatarDiv.textContent = getInitials(artist.name);
+
+                    const trackInfoDiv = document.createElement('div');
+                    trackInfoDiv.className = 'track-info';
+
+                    const trackNameDiv = document.createElement('div');
+                    trackNameDiv.className = 'track-name';
+                    trackNameDiv.textContent = artist.name;
+
+                    const trackArtistDiv = document.createElement('div');
+                    trackArtistDiv.className = 'track-artist'; // Re-using class, content indicates plays
+                    trackArtistDiv.textContent = "Plays: " + artist.count;
+
+                    trackInfoDiv.appendChild(trackNameDiv);
+                    trackInfoDiv.appendChild(trackArtistDiv);
+
+                    const trackTimeDiv = document.createElement('div');
+                    trackTimeDiv.className = 'track-time'; // Re-using class, content indicates "Top Artist"
+                    trackTimeDiv.textContent = "Top Artist";
+
+                    trackItem.appendChild(avatarDiv);
+                    trackItem.appendChild(trackInfoDiv);
+                    trackItem.appendChild(trackTimeDiv);
+
+                    playlistSection.appendChild(trackItem);
+                });
+            }
+            renderPlaylistTracks();
+
+            function renderContributors() {
+                const contributorsSection = document.querySelector('.contributors-section');
+                if (!contributorsSection) return;
+
+                const topContributorsDiv = contributorsSection.querySelector('.top-contributors');
+
+                // Clear existing dynamic content
+                if (topContributorsDiv) {
+                    const existingTopContributors = topContributorsDiv.querySelectorAll('.top-contributor');
+                    existingTopContributors.forEach(item => item.remove());
+                }
+                const existingContributorItems = contributorsSection.querySelectorAll('.contributor-item');
+                existingContributorItems.forEach(item => item.remove());
+
+                if (!backendData.topUsers || backendData.topUsers.length === 0) {
+                    const message = document.createElement('p');
+                    message.textContent = 'No contributor data available.';
+                    message.style.textAlign = 'center';
+                    message.style.padding = '20px';
+                    // Append after .top-contributors div if it exists, otherwise just append to section
+                    if (topContributorsDiv) {
+                         topContributorsDiv.parentNode.insertBefore(message, topContributorsDiv.nextSibling);
+                    } else {
+                        contributorsSection.appendChild(message);
+                    }
+                    return;
+                }
+
+                // Render Top Contributors (Top 3)
+                if (topContributorsDiv) {
+                    const topThreeUsers = backendData.topUsers.slice(0, 3);
+                    topThreeUsers.forEach(user => {
+                        const topContributorDiv = document.createElement('div');
+                        topContributorDiv.className = 'top-contributor';
+
+                        const avatarDiv = document.createElement('div');
+                        avatarDiv.className = 'top-contributor-avatar';
+                        avatarDiv.textContent = getInitials(user.displayName);
+
+                        const nameDiv = document.createElement('div');
+                        nameDiv.className = 'top-contributor-name';
+                        nameDiv.textContent = user.displayName;
+
+                        const tracksDiv = document.createElement('div');
+                        tracksDiv.className = 'top-contributor-tracks';
+                        tracksDiv.textContent = user.count + " tracks";
+
+                        topContributorDiv.appendChild(avatarDiv);
+                        topContributorDiv.appendChild(nameDiv);
+                        topContributorDiv.appendChild(tracksDiv);
+                        topContributorsDiv.appendChild(topContributorDiv);
+                    });
+                }
+
+                // Render All Contributors (List)
+                backendData.topUsers.forEach(user => {
+                    const contributorItemDiv = document.createElement('div');
+                    contributorItemDiv.className = 'contributor-item';
+
+                    const avatarDiv = document.createElement('div');
+                    avatarDiv.className = 'contributor-avatar';
+                    avatarDiv.textContent = getInitials(user.displayName);
+
+                    const infoDiv = document.createElement('div');
+                    infoDiv.className = 'contributor-info';
+
+                    const nameDiv = document.createElement('div');
+                    nameDiv.className = 'contributor-name';
+                    nameDiv.textContent = user.displayName;
+
+                    const roleDiv = document.createElement('div');
+                    roleDiv.className = 'contributor-role';
+                    roleDiv.textContent = user.count + " tracks added";
+
+                    infoDiv.appendChild(nameDiv);
+                    infoDiv.appendChild(roleDiv);
+
+                    contributorItemDiv.appendChild(avatarDiv);
+                    contributorItemDiv.appendChild(infoDiv);
+
+                    contributorsSection.appendChild(contributorItemDiv); // Appends to the end of the section
+                });
+            }
+            renderContributors();
+
+            function renderTracksSection() {
+                const tracksSection = document.querySelector('.tracks-section');
+                if (!tracksSection) return;
+
+                // Remove existing track items
+                const existingTrackItems = tracksSection.querySelectorAll('.track-item');
+                existingTrackItems.forEach(item => item.remove());
+
+                if (!backendData.topGenres || backendData.topGenres.length === 0) {
+                    const message = document.createElement('p');
+                    message.textContent = 'No tracks to display (using top genres as sample data).';
+                    message.style.textAlign = 'center';
+                    message.style.padding = '20px';
+                     // Make sure not to append if a search box or title is the only thing left
+                    const sectionTitle = tracksSection.querySelector('.section-title');
+                    const searchBox = tracksSection.querySelector('.search-box');
+                    let lastElement = tracksSection.lastElementChild;
+                    if (lastElement === searchBox || lastElement === sectionTitle) {
+                        tracksSection.appendChild(message);
+                    } else if (searchBox && searchBox.nextSibling) {
+                         searchBox.parentNode.insertBefore(message, searchBox.nextSibling);
+                    } else {
+                         tracksSection.appendChild(message);
+                    }
+                    return;
+                }
+
+                const genresToDisplay = backendData.topGenres.slice(0, 5);
+
+                genresToDisplay.forEach(genre => {
+                    const trackItem = document.createElement('div');
+                    trackItem.className = 'track-item';
+
+                    const avatarDiv = document.createElement('div');
+                    avatarDiv.className = 'track-avatar';
+                    avatarDiv.textContent = getInitials(genre.name);
+
+                    const trackInfoDiv = document.createElement('div');
+                    trackInfoDiv.className = 'track-info';
+
+                    const trackNameDiv = document.createElement('div');
+                    trackNameDiv.className = 'track-name';
+                    trackNameDiv.textContent = genre.name; // Using genre name as track name
+
+                    const trackArtistDiv = document.createElement('div');
+                    trackArtistDiv.className = 'track-artist'; // Re-using class, content indicates count
+                    trackArtistDiv.textContent = "Count: " + genre.count;
+
+                    trackInfoDiv.appendChild(trackNameDiv);
+                    trackInfoDiv.appendChild(trackArtistDiv);
+
+                    const trackTimeDiv = document.createElement('div');
+                    trackTimeDiv.className = 'track-time'; // Re-using class, content indicates "Genre"
+                    trackTimeDiv.textContent = "Genre";
+
+                    trackItem.appendChild(avatarDiv);
+                    trackItem.appendChild(trackInfoDiv);
+                    trackItem.appendChild(trackTimeDiv);
+
+                    tracksSection.appendChild(trackItem);
+                });
+            }
+            renderTracksSection();
+
             // Navigation functionality
             const navItems = document.querySelectorAll('.nav-item');
             navItems.forEach(item => {
